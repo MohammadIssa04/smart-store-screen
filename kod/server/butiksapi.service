@@ -1,0 +1,13 @@
+[Unit]
+Description=Min Butik app-API (port 8484, bara Tailscale och lokalt nät)
+After=network-online.target
+
+[Service]
+WorkingDirectory=/home/minbutik/butiksbot
+EnvironmentFile=/home/minbutik/butiksbot/butiksbot.env
+ExecStart=/home/minbutik/butiksbot/.venv/bin/python -m api.main
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

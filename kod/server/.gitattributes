@@ -1,0 +1,2 @@
+# Koden körs på Linux (Pi:n): alltid LF, även om den checkas ut på Windows.
+* text=auto eol=lf

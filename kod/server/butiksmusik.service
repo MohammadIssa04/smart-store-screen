@@ -1,0 +1,14 @@
+[Unit]
+Description=Min Butik butiksmusik (ny spelare, styrs från appen)
+After=pipewire.service
+
+[Service]
+WorkingDirectory=/home/minbutik/butiksbot
+EnvironmentFile=/home/minbutik/butiksbot/butiksbot.env
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+ExecStart=/home/minbutik/butiksbot/.venv/bin/python -m musik.spelare
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

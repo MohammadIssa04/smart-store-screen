@@ -1,0 +1,7 @@
+python-telegram-bot[job-queue]>=21.6,<23
+fastapi>=0.115
+uvicorn>=0.30
+zeroconf>=0.132
+python-multipart>=0.0.9
+# Etikettskrivaren (kräver --ignore-requires-python på Python 3.13):
+# niimprint @ git+https://github.com/AndBondStyle/niimprint

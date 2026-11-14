@@ -1,0 +1,14 @@
+[Unit]
+Description=Min Butik Telegram-bot
+StartLimitIntervalSec=0
+
+[Service]
+WorkingDirectory=/home/minbutik/butiksbot
+EnvironmentFile=/home/minbutik/butiksbot/butiksbot.env
+ExecStart=/home/minbutik/butiksbot/.venv/bin/python -u bot.py
+Restart=always
+RestartSec=15
+Nice=5
+
+[Install]
+WantedBy=default.target

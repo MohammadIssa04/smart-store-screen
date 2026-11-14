@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <cache-path name="foton" path="foton/" />
+    <!-- Ny version av appen, hämtad från butikens dator -->
+    <cache-path name="apk" path="apk/" />
+</paths>

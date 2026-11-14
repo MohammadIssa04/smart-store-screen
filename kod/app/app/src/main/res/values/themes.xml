@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Systemfönstret innan Compose ritar: samma krämvita bakgrund som appen (kantlöst, se MainActivity). -->
+    <style name="Tema" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/bakgrund</item>
+    </style>
+    <color name="bakgrund">#FFF6F0</color>
+    <color name="rosa">#E53373</color>
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pi:n nås med http på butikens wifi (adressen är okänd i förväg) och via Tailscale
+     (krypterat i sig). Allt i API:t kräver ändå telefonens personliga nyckel. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

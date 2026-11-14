@@ -1,0 +1,35 @@
+# Hemligheter: token, nycklar, Telegram-ID:n (och nanos reservkopior av dem)
+butiksbot.env
+butiksbot.env.*
+!butiksbot.env.exempel
+*.env
+.env*
+*.save
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Lärdata, utkast, cache och loggar (finns bara på Pi:n)
+data/
+*.log
+*.jsonl
+
+# Modeller och typsnitt (stora, hämtas separat till assets/)
+assets/
+*.onnx
+
+# Videor och bilder: demos, cachade friläggningar, nedladdade kandidater
+exempel/
+*.mp4
+*.mov
+*.mkv
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.mask.png
+
+# Gammal mellanlagring på Pi:n
+.ny/
