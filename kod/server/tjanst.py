@@ -96,6 +96,24 @@ def oklar(text: str) -> bool:
             or len(t.rubrik.split()) > 5)
 
 
+VANLIGA_TILLAGG = {"energy", "drink", "original", "zero", "chips", "läsk", "juice", "and"}
+
+
+def har_hittat_pa_ord(fore: str, efter: str) -> bool:
+    """True om AI:ns namn har ord som inte liknar något pappa skrev (t.ex. "Lazy" -> "Estrella":
+    ett annat märke). Stavningsrättningar ("Lazy" -> "Lays", "apelsint" -> "Apelsiner") godkänns."""
+    import difflib
+    import re as _re
+    egna = [w for w in _re.findall(r"[a-zåäöéü0-9]+", fore.lower()) if len(w) > 1]
+    for w in _re.findall(r"[a-zåäöéü0-9]+", efter.lower()):
+        if len(w) <= 2 or w in egna or w in VANLIGA_TILLAGG or any(t.isdigit() for t in w):
+            continue
+        if not difflib.get_close_matches(w, egna, n=1, cutoff=0.6) and not any(
+                len(e) >= 4 and (w in e or e in w) for e in egna):
+            return True
+    return False
+
+
 async def tolka_text(a: dict, text: str) -> None:
     """Reglerna först. Är texten oklar och AI:n finns: låt AI:n tolka, med pappas senaste
     godkända meddelanden som exempel. Allt oklart loggas för genomgång."""
@@ -104,7 +122,11 @@ async def tolka_text(a: dict, text: str) -> None:
         minne.logga_oforstatt("oklar_text", text, ai=d)
         if d:
             a["text"] = (a["text"] + " " + text).strip()
-            a["rubrik"] = a["rubrik"] or minne.synonym(d["namn"].strip())
+            namn = d["namn"].strip()
+            if har_hittat_pa_ord(text, namn):          # AI:n bytte märke eller hittade på: pappas egna ord
+                log.info("AI-namnet %r liknar inte texten %r: använder texten", namn, text)
+                namn = tolka.tolka(text).namn or namn
+            a["rubrik"] = a["rubrik"] or minne.synonym(namn)
             a["pris"] = a["pris"] or tolka.snygga_pris(d.get("pris", ""))
             if d.get("dagar"):
                 a["dagar"], a["dagar_angivet"] = max(1, min(konfig.MAX_DAGAR, d["dagar"])), True
@@ -259,6 +281,8 @@ async def ratta_namn(namn: str) -> str:
     except Exception:
         return namn
     ny = ((d or {}).get("namn") or "").strip()
+    if ny and har_hittat_pa_ord(namn, ny):
+        return namn                                    # ett annat märke eller nya ord: inte en stavningsrättning
     if not ny or len(ny) > max(40, 2 * len(namn)) or len(ny.split()) > len(namn.split()) + 1:
         return namn
     if ny != namn:
@@ -502,7 +526,7 @@ def satt_visningar(post: dict, vikt: int) -> dict:
 async def byt_langd(post: dict, sekunder: float) -> dict:
     """Ny visningstid för en publicerad annons: renderar om samma annons (samma bilder, layout och övergång)
     i den nya längden och byter filen på skylten. Den gamla filen arkiveras. Tar ungefär en minut."""
-    from video.animation import LANGD, MAX_LANGD, MIN_LANGD
+    from video.animation import MAX_LANGD, MIN_LANGD
     sek = max(MIN_LANGD, min(MAX_LANGD, round(float(sekunder))))
     fotos = [Path(f) for f in post.get("bilder", [])]
     if not fotos or not all(f.is_file() for f in fotos):
@@ -520,7 +544,6 @@ async def byt_langd(post: dict, sekunder: float) -> dict:
         res = await skapa_video(fotos, post["rubrik"], post["pris"], post["typ"] == "fynd", ut, exemplar, stil,
                                 tuple(post.get("overgang") or ("fade", "fade")), justering=just,
                                 variant=post.get("variant"), langd=sek)
-    import skyltvrid
     for k in KANALER:
         if hasattr(k, "byt_video"):
             post["kanaler"][k.namn] = k.byt_video(post, res["video"])

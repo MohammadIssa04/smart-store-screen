@@ -27,8 +27,8 @@ MAX_DAGAR = 60
 # ---------- tunga jobb får aldrig störa skylten ----------
 # Rendering och friläggning körs med lägsta CPU- och diskprioritet och bara på kärna 1-3,
 # så att kärna 0 alltid är fri för skyltens video och musiken. Det tar lite längre tid.
-RENDER_TRADAR = 3
-RENDER_KARNOR = "1-3"
+RENDER_TRADAR = int(os.environ.get("RENDER_TRADAR", "3"))     # hemservern: fler
+RENDER_KARNOR = os.environ.get("RENDER_KARNOR", "1-3")       # kärna 0 är skyltens och musikens
 
 
 # Musikspelarens styrsocket (API:t pratar med spelaren här). Ligger i konfig så att API:t inte behöver
@@ -56,7 +56,8 @@ def lag_prioritet() -> None:
         pass
     if hasattr(os, "sched_setaffinity") and (os.cpu_count() or 1) >= 4:
         try:
-            os.sched_setaffinity(0, {1, 2, 3})
+            a, b = (int(x) for x in RENDER_KARNOR.split("-"))
+            os.sched_setaffinity(0, set(range(a, b + 1)))
         except OSError:
             pass
     if shutil.which("ionice"):

@@ -15,7 +15,7 @@ import logging
 from pathlib import Path
 
 import numpy as np
-from PIL import Image, ImageEnhance, ImageFilter
+from PIL import Image, ImageDraw, ImageEnhance, ImageFilter
 
 import konfig
 
@@ -45,8 +45,44 @@ def _sess(namn: str):
     return _sessioner[namn]
 
 
+_hemserver_nere = {"tid": 0.0}
+
+
+def _mask_hemserver(rgb: Image.Image, modell: str) -> np.ndarray | None:
+    """Masken från bildtjänsten på hemservern (BILDSERVER_URL + BILDSERVER_NYCKEL i butiksbot.env).
+    None om tjänsten saknas eller inte svarar: då gör Pi:n jobbet själv (och provar igen om 5 min)."""
+    import io
+    import os
+    import time
+    url = os.environ.get("BILDSERVER_URL", "").strip().rstrip("/")
+    nyckel = os.environ.get("BILDSERVER_NYCKEL", "").strip()
+    if not url or not nyckel or time.time() - _hemserver_nere["tid"] < 300:
+        return None
+    try:
+        import httpx
+        buf = io.BytesIO()
+        rgb.save(buf, "JPEG", quality=92)
+        start = time.monotonic()
+        r = httpx.post(f"{url}/mask", params={"modell": modell}, content=buf.getvalue(),
+                       headers={"X-Nyckel": nyckel, "Content-Type": "image/jpeg"},
+                       timeout=httpx.Timeout(60.0, connect=3.0))
+        r.raise_for_status()
+        m = Image.open(io.BytesIO(r.content)).convert("L")
+        if m.size != rgb.size:
+            m = m.resize(rgb.size, Image.LANCZOS)
+        log.info("Mask från hemservern (%s) på %.1f s", modell, time.monotonic() - start)
+        return np.asarray(m).astype(np.float32) / 255.0
+    except Exception as e:
+        _hemserver_nere["tid"] = time.time()
+        log.warning("Hemservern svarade inte (%s): Pi:n friläger själv i 5 min", type(e).__name__)
+        return None
+
+
 def mask(img: Image.Image, modell: str = "u2netp") -> np.ndarray:
-    """Förgrundsmask 0..1 i bildens storlek."""
+    """Förgrundsmask 0..1 i bildens storlek. Hemservern först, annars här på Pi:n."""
+    m = _mask_hemserver(img.convert("RGB"), modell)
+    if m is not None:
+        return m
     _, medel, std, sz, sigmoid = MODELLER[modell]
     rgb = img.convert("RGB")
     a = np.asarray(rgb.resize((sz, sz), Image.LANCZOS)).astype(np.float32)
@@ -60,6 +96,41 @@ def mask(img: Image.Image, modell: str = "u2netp") -> np.ndarray:
     ut = (ut - ut.min()) / (ut.max() - ut.min() + 1e-6)
     m = Image.fromarray((ut * 255).astype(np.uint8)).resize(rgb.size, Image.LANCZOS)
     return np.asarray(m).astype(np.float32) / 255.0
+
+
+def fyll_fran_vit_bakgrund(img: Image.Image, m: np.ndarray, grans: int = 246) -> np.ndarray:
+    """Modellen tappar ibland vita eller genomskinliga delar av en förpackning mot vit bakgrund
+    (2026-11-20: kycklingpåsar där bara den röda remsan, eller två halvor, blev kvar). På packshots med
+    ren vit bakgrund är allt som inte hänger ihop med bakgrunden produkten. Bara inom produktens höjd,
+    så att spegling och skugga under förpackningen inte tas med."""
+    a = np.asarray(img.convert("RGB")).astype(np.int16)
+    h, w = a.shape[:2]
+    kant = np.concatenate([a[0], a[-1], a[:, 0], a[:, -1]])
+    if (kant.min(axis=1) >= grans).mean() < 0.9:
+        return m                                      # ingen ren vit bakgrund
+    mb = m > 0.5
+    if not mb.any():
+        return m
+    b = Image.fromarray(((a.min(axis=2) >= grans) * 255).astype(np.uint8)).copy()
+    for x in range(0, w, 5):
+        for y in (0, h - 1):
+            if b.getpixel((x, y)) == 255:
+                ImageDraw.floodfill(b, (x, y), 128)
+    for y in range(0, h, 5):
+        for x in (0, w - 1):
+            if b.getpixel((x, y)) == 255:
+                ImageDraw.floodfill(b, (x, y), 128)
+    fg = np.array(b) != 128
+    rader = np.where(mb.any(axis=1))[0]
+    marg = int(0.02 * h)
+    fg[:max(0, rader[0] - marg)] = False
+    fg[rader[-1] + marg + 1:] = False
+    if fg.sum() < 1.15 * mb.sum() or (mb & fg).sum() < 0.95 * mb.sum() or fg.mean() > 0.88:
+        return m                                      # modellen fick redan med allt
+    log.info("Vit bakgrund: fyller i det modellen missade (%.0f %% -> %.0f %% av bilden)", 100 * mb.mean(),
+             100 * fg.mean())
+    mjuk = np.asarray(Image.fromarray((fg * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(1))) / 255.0
+    return np.maximum(m, mjuk.astype(np.float32))
 
 
 def _godkand(m: np.ndarray, modell: str) -> bool:
@@ -169,7 +240,7 @@ BURKAR = {
 
 # Uppmätt 2026-11-12: hela burkar och frukt 1,00 / <1 % / 0; kluven burk 0,93-0,95 / 6-7 % / 0;
 # burk med halva locket borta 0,71-0,80 / 9-23 % / 77-166 rader.
-MIN_FORM_FYLL = 0.97      # andel täckt mellan vänster- och högerkant, rad för rad
+MIN_FORM_FYLL = 0.955     # andel täckt rad för rad (0.97 underkände en hel Lays-påse, 0.963 efter upprätning; trasiga: 0.66-0.93)
 MAX_FORM_HALVT = 0.03     # andel halvgenomskinligt (urtvättade fläckar)
 
 
@@ -238,6 +309,7 @@ def frilagg(foto: Path | Image.Image, modeller=ORDNING) -> Image.Image | None:
                 log.exception("Friläggning med %s misslyckades", modell)
                 continue
             m = np.clip((m - 0.45) / 0.3, 0, 1)          # skarpare kant, inga halvgenomskinliga rester
+            m = fyll_fran_vit_bakgrund(img, m)
             if _godkand(m, modell):
                 ut = img.copy()
                 ut.putalpha(Image.fromarray((m * 255).astype(np.uint8)))

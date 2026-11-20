@@ -73,7 +73,7 @@ async def test() -> None:
         h = {"Authorization": f"Bearer {nyckel}"}
         r = await c.get(f"{bas}/api/hej", headers=h)
         kolla("nyckel fungerar lokalt", r.status_code == 200 and r.json()["via"] == "lokalt", r.text[:120])
-        r = await c.get(f"http://100.101.102.103:{PORT}/api/hej", headers=h)
+        r = await c.get(f"http://100.64.0.1:{PORT}/api/hej", headers=h)
         kolla("nyckel fungerar via Tailscale", r.status_code == 200 and r.json()["via"] == "tailscale",
               r.json().get("via", ""))
         kolla("nyckeln sparas inte i klartext", nyckel not in enheter.ENHETER.read_text())

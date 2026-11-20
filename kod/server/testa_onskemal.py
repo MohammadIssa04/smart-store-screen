@@ -82,6 +82,11 @@ async def api():
         h = {"Authorization": f"Bearer {nyckel}"}
         har = {**h, "X-Sprak": "ar"}
         j = (await c.post("/api/annonser/ny", headers=har, data={"text": "bananer"})).json()
+        for _ in range(60):                     # /ny svarar inom 8 s; tolkningen kan fortsätta i bakgrunden
+            if j["status"] != "arbetar":
+                break
+            await asyncio.sleep(1)
+            j = (await c.get(f"/api/annonser/arende/{j['id']}", headers=har)).json()
         m = j["meddelanden"]
         kolla("pappas egna meddelanden sparas (chatten kan visas igen)", m and m[0]["fran"] == "du" and m[0]["text"] == "bananer")
         kolla("arabiska: butikens fråga på arabiska", "ما سعر" in j["fraga"] or "التقط" in j["fraga"], j["fraga"])

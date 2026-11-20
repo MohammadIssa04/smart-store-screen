@@ -71,7 +71,8 @@ async def main_test():
             if j["status"] != "arbetar":
                 break
             await asyncio.sleep(2)
-        kolla("lägesrapporter under sökningen", any("Söker" in l for l in lagen), len(lagen))
+        # Bilden kan komma ur bildförrådet direkt (då ingen "Söker"): minst två lägen räcker
+        kolla("lägesrapporter under arbetet", len(lagen) >= 2 or any("Söker" in l for l in lagen), lagen[:4])
         if j["status"] == "fragar":
             print("   frågar:", j["fraga"])
             j = (await c.post(f"/api/annonser/arende/{aid}/svar", headers=h, data={"text": "12/kg"})).json()

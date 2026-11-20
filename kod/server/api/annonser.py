@@ -41,6 +41,7 @@ from lager import tid
 from video.animation import MAX_PRODUKTER
 
 log = logging.getLogger("butiksbot.api.annonser")
+_BAKGRUND: set = set()             # bakgrundsjobb som inte får städas bort i förtid
 router = APIRouter(prefix="/api/annonser")
 MAX_FOTO = 15 * 1024 * 1024
 arenden: dict[str, dict] = {}            # ärende-id -> läge (finns kvar i 24 h)
@@ -193,8 +194,7 @@ def fortsatt(st: dict) -> None:
 
 async def gor_video(st: dict, justering: dict | None = None) -> None:
     a = st["a"]
-    n = len(a["fotos"])
-    st["lage"] = f"Gör videon … (ca {1 + n // 2}–{2 + n // 2} minuter)"
+    st["lage"] = "Gör videon … (ca en minut)"   # på hemservern; utan den tar Pi:n 1-2 minuter
 
     async def lage(text: str) -> None:
         st["lage"] = text.lstrip("🔍🔧🎬 ")
@@ -223,7 +223,30 @@ async def ny(text: str = Form(""), fotos: list[UploadFile] = File(default=[]), v
     if not text.strip() and not fotos:
         return fel("Skriv vad varan heter eller ta ett foto.")
     du(st, text, fotos)
-    await bearbeta(st, text, fotos)
+    if fotos:
+        await bearbeta(st, text, fotos)         # fotona måste läsas medan anropet pågår
+        return utan_interna(st)
+    # Bara text: AI-tolkningen kan ta tid när Gemini är överbelastat, och appen ger upp efter 15 s.
+    # Svara senast efter 8 s; tolkningen fortsätter i bakgrunden och appen ser läget som vanligt.
+    MARK = "Läser vad du skrev …"
+    st.update(status="arbetar", lage=MARK)
+
+    async def jobb():
+        try:
+            await bearbeta(st, text, [])
+        except Exception:
+            log.exception("Tolkningen misslyckades")
+            bot(st, "Något gick fel. Skriv igen.")
+            st.update(status="fragar", lage="")
+        if st["status"] == "arbetar" and st.get("lage") == MARK:
+            st.update(status="fragar", lage="")
+    uppgift = asyncio.create_task(jobb())
+    _BAKGRUND.add(uppgift)
+    uppgift.add_done_callback(_BAKGRUND.discard)
+    try:
+        await asyncio.wait_for(asyncio.shield(uppgift), 8)
+    except asyncio.TimeoutError:
+        pass
     return utan_interna(st)
 
 

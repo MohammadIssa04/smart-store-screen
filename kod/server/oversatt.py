@@ -34,6 +34,7 @@ FASTA = {
     "Ingen av bilderna gick att klippa ut snyggt.": "لم يكن قصّ أي من الصور بشكل جميل ممكناً.",
     "Skriv vad som är fel.": "اكتب ما هي المشكلة.",
     "Tack! Mohammad har fått ditt meddelande.": "شكراً! وصلت رسالتك إلى محمد.",
+    "Gör videon … (ca en minut)": "أصنع الفيديو … (حوالي دقيقة)",
     "Ingen video än.": "لا يوجد فيديو بعد.",
     "Det finns ingen färdig video att publicera.": "لا يوجد فيديو جاهز للنشر.",
     "Avbrutet.": "أُلغي.",

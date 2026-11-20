@@ -29,6 +29,7 @@ GEMINI_RESERVER = [m.strip() for m in os.environ.get(
     if m.strip()]
 GEMINI_RESERV = GEMINI_RESERVER[0] if GEMINI_RESERVER else GEMINI_MODELL
 _vilar: dict[str, float] = {}          # modell -> tid då den får provas igen (kvoten slut eller saknas)
+VILA_OVERBELASTAD = 300                 # s: huvudmodellen svarar inte/503 -> reserverna direkt i 5 min
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/interactions"
 GEMINI_REVISION = "2026-05-20"
 
@@ -163,7 +164,9 @@ async def _fraga_gemini(innehall: list[dict], schema: dict) -> dict | None:
     }
     # Huvudmodellen är ofta överbelastad: kort tidsgräns, sedan reserverna en i taget. Modeller vars
     # kvot är slut hoppas över en stund. Sist ett nytt försök med första reserven efter en kort paus.
-    alla = [(GEMINI_MODELL, 75.0)] + [(m, 120.0) for m in GEMINI_RESERVER]
+    # Bara bilder/text: 30 s räcker (svar tar normalt 3–10 s). Video tar längre.
+    har_video = any(b.get("type") == "video" for b in innehall)
+    alla = [(GEMINI_MODELL, 75.0 if har_video else 30.0)] + [(m, 120.0) for m in GEMINI_RESERVER]
     forsok = [(m, t) for m, t in alla if _vilar.get(m, 0) < time.monotonic()] or alla[:1]
     if len(forsok) > 1:
         forsok.append(forsok[1])
@@ -188,12 +191,13 @@ async def _fraga_gemini(innehall: list[dict], schema: dict) -> dict | None:
         except httpx.HTTPError as e:
             # Tidsgräns eller avbruten anslutning (ofta vid hög belastning): prova reservmodellen.
             log.warning("Ingen kontakt med Gemini %s: %s %s", modell, type(e).__name__, e)
+            _vilar[modell] = time.monotonic() + VILA_OVERBELASTAD   # nästa anrop går direkt till reserven
             continue
         if r.status_code in (401, 403):
             log.error("GEMINI_API_KEY är ogiltig eller saknar behörighet (%s)", r.status_code)
             return None
-        if r.status_code in (404, 429):
-            _vilar[modell] = time.monotonic() + (3600 if r.status_code == 404 else 600)
+        if r.status_code in (404, 429, 503):
+            _vilar[modell] = time.monotonic() + {404: 3600, 429: 600, 503: VILA_OVERBELASTAD}[r.status_code]
         if r.status_code in (404, 429, 503):
             log.warning("Gemini %s svarade %s (%s) – provar reservmodellen", modell, r.status_code,
                         "gratiskvoten slut" if r.status_code == 429 else r.text[:150])

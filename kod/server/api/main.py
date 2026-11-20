@@ -67,11 +67,14 @@ async def mdns_annonsera() -> None:
 
 
 async def hall_skrivaren_vaken() -> None:
-    """Etikettskrivaren stänger av sig efter 60 min: en kort kontakt var 55:e minut, dygnet runt."""
+    """Håller etikettskrivaren ansluten hela tiden: en öppen anslutning och en kort kontakt var 5:e minut."""
     await asyncio.sleep(60)
+    forra = None
     while True:
         ok = await asyncio.to_thread(etikett.hall_vaken)
-        log.info("Etikettskrivaren väckt: %s", "ok" if ok else "svarade inte")
+        if ok != forra:
+            log.info("Etikettskrivaren: %s", "ansluten" if ok else "svarar inte")
+            forra = ok
         await asyncio.sleep(etikett.VAKEN_MINUTER * 60)
 
 

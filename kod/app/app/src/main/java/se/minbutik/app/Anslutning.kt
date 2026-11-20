@@ -27,7 +27,7 @@ data class Svar(val kod: Int, val json: JSONObject?)
  *  1. butikens wifi: mDNS-tjänsten "Min Butik" (_minbutik._tcp)
  *  2. senast fungerande lokala adress
  *  3. minbutik-tv.local
- *  4. Tailscale (Pi:ns Tailscale-adress) – för den som har Tailscale, var som helst
+ *  4. Tailscale (100.64.0.1) – för den som har Tailscale, var som helst
  */
 object Anslutning {
     const val PORT = 8484

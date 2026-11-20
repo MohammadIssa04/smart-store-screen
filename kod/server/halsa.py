@@ -22,6 +22,11 @@ STATUS = konfig.DATA_DIR / "halsa.json"
 OPPET = (10, 21)
 
 
+def _ampen_ansluten() -> bool:
+    """Går ljudet till Bluetooth-ampen? (standardutgången är en bluez-utgång)"""
+    return (_sh(["pactl", "get-default-sink"]) or "").startswith("bluez_output")
+
+
 def _sh(cmd: list[str]) -> str:
     try:
         return subprocess.run(cmd, capture_output=True, text=True, timeout=20).stdout.strip()
@@ -90,6 +95,9 @@ def problem() -> dict[str, str]:
             s.close()
             if not st.get("spelar") and not st.get("pausad"):
                 ut["musik"] = "Musiken spelar inte (och är inte pausad)."
+            elif st.get("spelar") and not _ampen_ansluten():
+                ut["ampen"] = ("Ampen är inte ansluten: musiken hörs inte i butiken. Slå på ampen, "
+                               "eller koppla bort mobilen från den.")
         except Exception:
             ut["musik"] = "Musikspelaren svarar inte."
     try:

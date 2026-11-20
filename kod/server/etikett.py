@@ -7,7 +7,8 @@ varans namn till vänster och stort pris till höger (Poppins). Priset tolkas so
 Utskrift (ETIKETT_LAGE i butiksbot.env):
   test (standard) – etiketten sparas som bild i data/etiketter/test/, inget skickas till skrivaren
   usb             – via USB-kabel (ETIKETT_PORT, t.ex. /dev/ttyACM0)
-  bluetooth       – via Bluetooth (ETIKETT_BT = skrivarens adress)
+  bluetooth       – via Bluetooth (ETIKETT_BT = skrivarens adress). Sitter skrivaren i USB används
+                    USB i stället, av sig själv: alltid ansluten, laddas, och musiken till ampen störs aldrig.
 Skrivaren nås med biblioteket niimprint (installeras när skrivaren testas, se ETIKETTER-TEST.md).
 Varje utskrift loggas i data/etiketter/logg.jsonl.
 """
@@ -20,7 +21,6 @@ import os
 import re
 import threading
 from datetime import datetime
-from pathlib import Path
 
 from PIL import Image, ImageDraw
 
@@ -163,8 +163,16 @@ def _bt_transport(adress: str, tidsgrans: float = 15.0):
     return TidsBluetooth()
 
 
+def usb_port() -> str | None:
+    """Skrivarens USB-port om kabeln sitter i, annars None."""
+    port = installning("ETIKETT_PORT", "/dev/ttyACM0")
+    return port if os.path.exists(port) else None
+
+
 def _skrivare():
     lage = installning("ETIKETT_LAGE", "test").lower()
+    if lage == "bluetooth" and usb_port():
+        lage = "usb"                               # kabeln sitter i: USB går före Bluetooth
     try:
         from niimprint import PrinterClient, SerialTransport
     except ImportError as e:
@@ -232,20 +240,61 @@ def _stang(skrivare) -> None:
         t.close()
 
 
-_status = {"tid": 0.0, "ok": False}
+_STATUS_FIL = MAPP / "status.json"
+_klient = None              # den öppna anslutningen (bara i API-processen, som håller den)
+
+
+def _spara_status(ok: bool) -> None:
+    import time
+    try:
+        MAPP.mkdir(parents=True, exist_ok=True)
+        _STATUS_FIL.write_text(json.dumps({"ok": ok, "tid": time.time()}))
+    except OSError:
+        pass
 
 
 def skrivarstatus(max_alder: float = 30) -> str:
-    """'test' | 'ansluten' | 'inte_ansluten'. Frågar skrivaren högst var max_alder sekund."""
+    """'test' | 'ansluten' | 'inte_ansluten'. Läser vad API:ts anslutning senast såg (ansluter aldrig
+    själv: varje nytt försök stör musiken till ampen). max_alder finns kvar för gamla anrop."""
     import time
     if installning("ETIKETT_LAGE", "test").lower() not in ("usb", "bluetooth"):
         return "test"
-    if time.time() - _status["tid"] > max_alder:
-        _status.update(ok=hall_vaken(), tid=time.time())
-    return "ansluten" if _status["ok"] else "inte_ansluten"
+    try:
+        st = json.loads(_STATUS_FIL.read_text())
+        if st.get("ok") and time.time() - st.get("tid", 0) < 3 * VAKEN_MINUTER * 60:
+            return "ansluten"
+    except (OSError, ValueError):
+        pass
+    return "inte_ansluten"
 
 
-VAKEN_MINUTER = 55          # skrivaren stänger av sig efter 60 min utan kontakt
+VAKEN_MINUTER = 5           # kontakt var 5:e min över den öppna anslutningen (skrivaren stänger av efter 60)
+
+
+VILA_EFTER_FEL = 3 * 3600   # svarar skrivaren inte: försök inte igen på 3 h (utskrift försöker ändå)
+_FEL_FIL = MAPP / "senast_svarade_inte"
+
+
+def _vilar_efter_fel() -> bool:
+    """Ett misslyckat Bluetooth-försök låser radion ca 40 s och då hackar musiken till ampen.
+    Därför väntar både boten och API:t (filen delas) en stund efter ett fel. Bara Bluetooth."""
+    import time
+    if installning("ETIKETT_LAGE", "test").lower() != "bluetooth" or usb_port():
+        return False
+    try:
+        return time.time() - _FEL_FIL.stat().st_mtime < VILA_EFTER_FEL
+    except OSError:
+        return False
+
+
+def _svarade() -> None:
+    """Skrivaren svarade: glöm tidigare fel (markeringen nollställs, inte raderad)."""
+    import os
+    try:
+        if _FEL_FIL.exists():
+            os.utime(_FEL_FIL, (0, 0))
+    except OSError:
+        pass
 
 
 def hall_vaken() -> bool:
@@ -253,24 +302,54 @@ def hall_vaken() -> bool:
     utskrift pågår. False om skrivaren inte svarar (avstängd, utom räckhåll eller ansluten till en telefon)."""
     if installning("ETIKETT_LAGE", "test").lower() not in ("usb", "bluetooth"):
         return True
+    global _klient
     if not _las.acquire(blocking=False):
         return True                                  # en utskrift pågår: den håller den vaken
-    skrivare = None
     try:
-        skrivare = _skrivare()
-        skrivare.heartbeat()
-        return True
-    except Exception as e:
-        log.info("Skrivaren svarade inte på väckningen: %s", e)
-        return False
+        ok = None
+        if _klient is not None:
+            try:
+                _klient.heartbeat()                  # över den öppna anslutningen: stör inte musiken
+                ok = True
+            except Exception as e:
+                log.info("Anslutningen till skrivaren bröts: %s, ansluter igen", e)
+                _koppla_ner()
+        if ok is None:
+            if _vilar_efter_fel():
+                ok = False                           # svarade inte nyss: stör inte musiken igen
+            else:
+                try:
+                    _klient = _skrivare()            # en ny anslutning, som sedan hålls öppen
+                    _klient.heartbeat()
+                    log.info("Etikettskrivaren ansluten (hålls ansluten)")
+                    ok = True
+                except Exception as e:
+                    _koppla_ner()
+                    log.info("Skrivaren svarade inte: %s (nästa försök om %d h)", e, VILA_EFTER_FEL // 3600)
+                    try:
+                        _FEL_FIL.parent.mkdir(parents=True, exist_ok=True)
+                        _FEL_FIL.touch()
+                    except OSError:
+                        pass
+                    ok = False
+        if ok:
+            _svarade()
+        _spara_status(ok)
+        return ok
     finally:
-        if skrivare is not None:
-            _stang(skrivare)
         _las.release()
+
+
+def _koppla_ner() -> None:
+    global _klient
+    if _klient is not None:
+        _stang(_klient)
+        _klient = None
 
 
 def skriv_ut(namn: str, pris: str, antal: int = 1, av: str = "") -> dict:
     """Skriver ut (eller sparar som bild i testläge). {'lage', 'meddelande', 'filer'}."""
+    global _klient
     antal = max(1, min(20, int(antal)))
     e = rita(namn, pris)
     lage = installning("ETIKETT_LAGE", "test").lower()
@@ -286,9 +365,10 @@ def skriv_ut(namn: str, pris: str, antal: int = 1, av: str = "") -> dict:
             svar = {"lage": "test", "filer": [str(fil)],
                     "meddelande": "Testläge: etiketten sparades som bild (skrivaren är inte inkopplad)."}
         else:
-            skrivare = None
             try:
-                skrivare = _skrivare()
+                if _klient is None:
+                    _klient = _skrivare()
+                skrivare = _klient
                 tathet = int(installning("ETIKETT_TATHET", "3") or 3)
                 if installning("ETIKETT_PROTOKOLL", "b1").lower() == "gammal":
                     for _ in range(antal):
@@ -296,18 +376,20 @@ def skriv_ut(namn: str, pris: str, antal: int = 1, av: str = "") -> dict:
                 else:
                     skriv_b1(skrivare, for_skrivaren(e), tathet, antal)
             except SkrivFel as f:
+                _koppla_ner()
                 rad.update(resultat="fel", fel=str(f))
                 _logga(rad)
                 raise
             except Exception as f:
+                _koppla_ner()                        # nästa gång: en ny anslutning
                 log.exception("Utskriften misslyckades")
                 rad.update(resultat="fel", fel=repr(f))
                 _logga(rad)
+                _spara_status(False)
                 raise SkrivFel("Skrivaren svarade inte. Är den på och har etiketter?") from f
-            finally:
-                if skrivare is not None:
-                    _stang(skrivare)
             rad["resultat"] = "utskriven"
+            _spara_status(True)
+            _svarade()
             svar = {"lage": lage, "filer": [],
                     "meddelande": f"{antal} etikett{'er' if antal > 1 else ''} utskriven{'a' if antal > 1 else ''}."}
     _logga(rad)

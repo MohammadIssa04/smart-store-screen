@@ -158,6 +158,7 @@ and a server that watches itself, fixes what it can and tells him in simple word
 
 | Version | Highlights |
 |:---:|---|
+| **1.6** | 🖥️ Photos cut out and **videos rendered on my home server** (16 s instead of 1–2 min, the Pi takes over if it's down) · 🤖 AI check of the video **5× faster** · 📺 TV turns itself on in the morning and back on if it switches off · 🏷️ label printer stays connected without music dropouts · 🔍 full-screen ad preview |
 | **1.5** | ⚡ Ads about **twice as fast** · ⏩ every song starts where the singing starts · ✂️ shorter songs · ✍️ typo fixing |
 | **1.4** | 🎨 Calmer design · 🧭 tabs back at the bottom · 🆘 **Report a problem** · 🔒 developer-only system info |
 | **1.3** | 💿 Music-first home screen with album covers · 🖼️ **pick the product photo yourself** · 📲 in-app updates · 🚀 instant start |

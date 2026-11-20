@@ -1,0 +1,17 @@
+[Unit]
+Description=Min Butik bildtjänst (friläggningsmasker åt Pi:n)
+After=network-online.target
+
+[Service]
+EnvironmentFile=/etc/butik-bild.env
+ExecStart=/opt/bild/bin/python /opt/bild/bildserver.py
+Restart=always
+RestartSec=5
+DynamicUser=yes
+ReadOnlyPaths=/opt/bild
+# butiksbot/data (cache för renderingen) pekar hit
+StateDirectory=butik-bild
+Environment=RENDER_TRADAR=6 RENDER_KARNOR=0-5
+
+[Install]
+WantedBy=multi-user.target

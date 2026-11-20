@@ -16,6 +16,8 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageEnhance, ImageFilter, ImageOps, ImageStat
 
 from .bas import kor_ffmpeg
+import logging
+log = logging.getLogger("butiksbot.animation")
 from .design import (B, GUL, H, KRAM, MAGENTA, MORK, _logga, _namn, bakgrund_stralar, namnetikett,
                      glitter, rosett)
 from .frilagg import ORDNING, frilagg, harmonisera
@@ -540,11 +542,62 @@ def overgangar_graf(inn: str, ut: str, farg: str, ing: str, utg: str, LANGD: flo
     return g
 
 
+_hemserver_nere = {"tid": 0.0}
+
+
+async def _rendera_hemserver(fotos: list[Path], ut: Path, param: dict) -> dict | None:
+    """Renderar på hemserverns bildtjänst (BILDSERVER_URL/BILDSERVER_NYCKEL). None om den inte svarar:
+    då renderar Pi:n själv (och provar hemservern igen om 5 min)."""
+    import base64
+    import json
+    import os
+    url = os.environ.get("BILDSERVER_URL", "").strip().rstrip("/")
+    nyckel = os.environ.get("BILDSERVER_NYCKEL", "").strip()
+    if not url or not nyckel or time.time() - _hemserver_nere["tid"] < 300:
+        return None
+    try:
+        import httpx
+        t0 = time.time()
+        filer = [("fotos", (f"foto{i}{Path(f).suffix}", Path(f).read_bytes(), "application/octet-stream"))
+                 for i, f in enumerate(fotos)]
+        async with httpx.AsyncClient(timeout=httpx.Timeout(120.0, connect=3.0)) as c:
+            r = await c.post(f"{url}/render", headers={"X-Nyckel": nyckel},
+                             data={"param": json.dumps(param, default=list)}, files=filer)
+        r.raise_for_status()
+        info = json.loads(base64.b64decode(r.headers["X-Info"]).decode())
+        tmp = ut.with_name(ut.name + ".hem.part")
+        tmp.write_bytes(r.content)
+        tmp.replace(ut)
+        info["video"] = ut
+        info["overgang"] = tuple(info.get("overgang") or ())
+        log.info("Video renderad på hemservern på %.1f s (%s)", time.time() - t0, ut.name)
+        return info
+    except Exception as e:
+        _hemserver_nere["tid"] = time.time()
+        log.warning("Hemservern kunde inte rendera (%s): Pi:n renderar själv i 5 min", type(e).__name__)
+        return None
+
+
 async def rendera(fotos: list[Path], namn: str, pris: str, fynd: bool, ut: Path,
                   exemplar: int = 1, stil: str = "rad",
                   overgang: tuple[str, str] = ("fade", "fade"), glid_hoger: bool = True,
                   justering: dict | None = None, variant: dict | None = None, langd: float | None = None) -> dict:
-    """langd: videons längd i sekunder (standard LANGD = 9). {'video': Path, 'sma': [index för bilder i låg upplösning], 'tider': (lager, ffmpeg)}"""
+    """langd: videons längd i sekunder (standard LANGD = 9). {'video': Path, 'sma': [index för bilder i låg upplösning], 'tider': (lager, ffmpeg)}
+    Hemservern först (snabbare), annars här på Pi:n."""
+    param = {"namn": namn, "pris": pris, "fynd": fynd, "exemplar": exemplar, "stil": stil,
+             "overgang": list(overgang), "glid_hoger": glid_hoger, "justering": justering or {},
+             "variant": variant, "langd": langd}
+    hem = await _rendera_hemserver(list(fotos), ut, param)
+    if hem is not None:
+        return hem
+    return await rendera_har(fotos, namn, pris, fynd, ut, exemplar, stil, overgang, glid_hoger, justering, variant, langd)
+
+
+async def rendera_har(fotos: list[Path], namn: str, pris: str, fynd: bool, ut: Path,
+                      exemplar: int = 1, stil: str = "rad",
+                      overgang: tuple[str, str] = ("fade", "fade"), glid_hoger: bool = True,
+                      justering: dict | None = None, variant: dict | None = None, langd: float | None = None) -> dict:
+    """Renderar på den här datorn (Pi:n, eller hemservern själv)."""
     t0 = time.time()
     # Friläggning och Pillow-ritning tar tid: kör i en tråd så att boten svarar under tiden.
     spec = await asyncio.to_thread(bygg_lager, fotos, namn, pris, fynd, ut.parent / f"lager_{ut.stem}",

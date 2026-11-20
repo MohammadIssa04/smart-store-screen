@@ -472,6 +472,32 @@ async def forbered_bilder_jobb(context: ContextTypes.DEFAULT_TYPE) -> None:
         log.exception("Bildförrådet misslyckades")
 
 
+async def tv_pa_jobb(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Skylten börjar kl 10: TV:n väcks via HDMI-CEC strax innan (tv.py)."""
+    import tv
+    if not await asyncio.to_thread(tv.sla_pa):
+        for chatt in TILLATNA:
+            try:
+                await context.bot.send_message(chatt, "📺 TV:n svarade inte i morse (HDMI-CEC). Slå på "
+                                               "Anynet+/SIMPLINK/HDMI-CEC i TV:ns inställningar.")
+            except Exception:
+                log.warning("Kunde inte skicka TV-varningen")
+
+
+async def tv_vakt_jobb(context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Var 5:e minut 10-21: har TV:n stängt av sig själv slås den på igen."""
+    from datetime import datetime as _dt
+    if not 10 <= _dt.now().hour < 21:
+        return
+    import tv
+    await asyncio.to_thread(tv.vakta)
+
+
+async def tv_av_jobb(context: ContextTypes.DEFAULT_TYPE) -> None:
+    import tv
+    await asyncio.to_thread(tv.stang_av)
+
+
 async def backup_jobb(context: ContextTypes.DEFAULT_TYPE) -> None:
     """Nattlig säkerhetskopia (backup.py) som egen process med lägsta prioritet. Misslyckas den två nätter
     i rad syns det i hälsokontrollen (senaste kopian är för gammal)."""
@@ -715,6 +741,9 @@ def main() -> None:
     app.job_queue.run_repeating(halsa_jobb, interval=3600, first=600)
     app.job_queue.run_daily(forbered_bilder_jobb, time=dtime(2, 30, tzinfo=ZoneInfo("Europe/Stockholm")))
     app.job_queue.run_daily(backup_jobb, time=dtime(3, 30, tzinfo=ZoneInfo("Europe/Stockholm")))
+    app.job_queue.run_daily(tv_pa_jobb, time=dtime(9, 57, tzinfo=ZoneInfo("Europe/Stockholm")))
+    app.job_queue.run_daily(tv_av_jobb, time=dtime(21, 5, tzinfo=ZoneInfo("Europe/Stockholm")))
+    app.job_queue.run_repeating(tv_vakt_jobb, interval=300, first=120)
     app.run_polling(allowed_updates=Update.ALL_TYPES, bootstrap_retries=-1)
 
 
