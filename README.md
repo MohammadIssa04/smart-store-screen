@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🌸 Store screen
+# Store screen
 
 ### Snap a photo. Type a price. Watch it go live on the store's screen.
 
@@ -18,7 +18,6 @@ and **self-monitoring**, controlled from one simple phone app and running on a s
 ![Status](https://img.shields.io/badge/status-running_in_a_real_store-2E7D32?style=flat-square)
 ![Tests](https://img.shields.io/badge/test_suites-10%2B-2E7D32?style=flat-square)
 ![Last commit](https://img.shields.io/github/last-commit/MohammadIssa04/smart-store-screen?style=flat-square&color=E91E63)
-![Code size](https://img.shields.io/github/languages/code-size/MohammadIssa04/smart-store-screen?style=flat-square&color=8E75B2)
 
 <br>
 
@@ -30,16 +29,16 @@ and **self-monitoring**, controlled from one simple phone app and running on a s
 
 ---
 
-## 📖 Contents
+## Contents
 
-[The story](#-the-story) · [A day in the store](#-a-day-in-the-store) · [Features](#-features) ·
-[What's new](#-whats-new) · [Screenshots](#-screenshots) · [How an ad is made](#-how-an-ad-is-made) ·
-[Architecture](#%EF%B8%8F-architecture) · [Reliability](#%EF%B8%8F-built-to-run-without-me) · [Performance](#-performance) ·
-[Problems I solved](#-problems-i-solved-along-the-way) · [What I learned](#-what-i-learned)
+[The story](#the-story) · [A day in the store](#a-day-in-the-store) · [Features](#features) ·
+[What's new](#whats-new) · [Screenshots](#screenshots) · [How an ad is made](#how-an-ad-is-made) ·
+[Architecture](#architecture) · [Reliability](#built-to-run-without-me) · [Performance](#performance) ·
+[Problems I solved](#problems-i-solved-along-the-way) · [What I learned](#what-i-learned)
 
 ---
 
-## 💡 The story
+## The story
 
 My dad runs a small grocery store. The store has a TV screen for offers, but making
 an ad for it meant finding a photo, opening an editor, typing prices, exporting a video and copying it over.
@@ -55,32 +54,32 @@ The one rule I built everything around:
 That rule shaped every decision: plain language instead of error codes, big buttons instead of menus,
 and a server that watches itself, fixes what it can and tells him in simple words when it can't.
 
-> 🔒 This repository is a showcase only. The source code is private.
+> This repository is a showcase only. The source code is private.
 
 ---
 
-## 🕰️ A day in the store
+## A day in the store
 
 | Time | What happens, automatically |
 |:---:|---|
-| **03:30** | 💾 A nightly backup of every setting, ad and playlist is made |
-| **Night** | 🎵 New (shorter) songs are found, and the AI listens to find where the singing starts · 🖼️ product images are prepared in advance |
-| **Opening** | 🎶 Music starts in the morning time block with a fresh order for the day |
-| **Morning** | 📱 Dad types `bananer 19 kr/kg` (bananas, 19 kr per kilo), taps the photo he likes best and then Publish |
-| **Midday** | ☀️ It's warm out, so cold drinks get more screen time · 🏷️ a few price labels are printed |
-| **Afternoon** | 🔍 The health check notices the label printer is off and says so in the app, in plain Swedish |
-| **Closing** | 🔇 Music stops · ⏳ offers that ended today are archived (never deleted) |
+| **03:30** | A nightly backup of every setting, ad and playlist is made |
+| **Night** | New (shorter) songs are found, and the AI listens to find where the singing starts · product images are prepared in advance |
+| **Opening** | Music starts in the morning time block with a fresh order for the day |
+| **Morning** | Dad types `bananer 19 kr/kg` (bananas, 19 kr per kilo), taps the photo he likes best and then Publish |
+| **Midday** | It's warm out, so cold drinks get more screen time · a few price labels are printed |
+| **Afternoon** | The health check notices the label printer is off and says so in the app, in plain Swedish |
+| **Closing** | Music stops · offers that ended today are archived (never deleted) |
 
 ---
 
-## ✨ Features
+## Features
 
 <table>
 <tr>
 <td width="50%" valign="top">
 
-### 📺 AI video ads
-- Photo **or just text** → a polished video, **6 to 30 seconds** long
+### AI video ads
+- Photo **or just text** a polished video, **6 to 30 seconds** long
 - No photo? It **finds a product image online**, cuts it out and arranges it
 - AI recognises the product and understands Swedish price formats like `kr/kg` (per kilo), `2 för` (2 for) and `+ pant` (plus bottle deposit)
 - **Pick your favourite photo**: 4 product images appear right away, tap one (or ask for more)
@@ -92,7 +91,7 @@ and a server that watches itself, fixes what it can and tells him in simple word
 </td>
 <td width="50%" valign="top">
 
-### 🌦️ Smart scheduling
+### Smart scheduling
 - **Weather-aware**: cold drinks show more on hot days, warm food on cold days
 - Choose **how often** an ad shows, with a live "≈ times per hour" estimate
 - Choose **how long** each showing lasts
@@ -104,24 +103,24 @@ and a server that watches itself, fixes what it can and tells him in simple word
 <tr>
 <td valign="top">
 
-### 🎵 Store music
+### Store music
 - Classic Arabic music in time blocks over the day
 - A **fresh order every day**, no repeats until everything has played
-- 💿 **Album covers** and a big, simple player as the home screen
-- ⏩ **Starts where the singing starts**: AI listens to every song and skips long intros and applause
-- ❤️ **Favourites** come up more often and are never rotated out
-- ✂️ Prefers **shorter songs**, so the store never sits through a 70-minute concert
+- **Album covers** and a big, simple player as the home screen
+- **Starts where the singing starts**: AI listens to every song and skips long intros and applause
+- **Favourites** come up more often and are never rotated out
+- Prefers **shorter songs**, so the store never sits through a 70-minute concert
 - New songs are found and added automatically every night
 
 </td>
 <td valign="top">
 
-### 📰 Weekly flyer
+### Weekly flyer
 - Pick up to **10 photos**: the AI reads every product name and price
 - Bad photos are swapped for clean product images automatically
 - One tap to **share to Facebook** with ready-made text
 
-### 🏷️ Price labels
+### Price labels
 - Type a name and price, or **snap a photo** and let the AI read the product
 - Prints to a **Bluetooth label printer**
 - Keeps the printer awake so it is always ready
@@ -131,7 +130,7 @@ and a server that watches itself, fixes what it can and tells him in simple word
 <tr>
 <td valign="top">
 
-### 🩺 Store computer health
+### Store computer health
 - Temperature, CPU, memory and disk, live in the app
 - Is the screen running? Is the speaker connected? One glance tells you
 - Hidden behind a developer mode (tap the version 7 times), so dad only sees what he needs
@@ -139,9 +138,9 @@ and a server that watches itself, fixes what it can and tells him in simple word
 </td>
 <td valign="top">
 
-### 🛟 Safety net
-- 🆘 **Report a problem** button: dad writes what's wrong and I get a push notification instantly
-- 📲 **Updates arrive inside the app**: no more sending APK files around
+### Safety net
+- **Report a problem** button: dad writes what's wrong and I get a push notification instantly
+- **Updates arrive inside the app**: no more sending APK files around
 - **Nightly backup** of everything that is hard to redo
 - Big media files are skipped, so backups stay small
 - The health check warns if a backup is ever missed
@@ -151,7 +150,7 @@ and a server that watches itself, fixes what it can and tells him in simple word
 </tr>
 </table>
 
-### 📱 Built for my dad
+### Built for my dad
 - **Swedish and Arabic**, with full right-to-left layout
 - Three big tabs at the bottom (**Music, Ads, Labels**) and a calm, readable design
 - Opens **instantly**: it finds the store in the background
@@ -162,20 +161,20 @@ and a server that watches itself, fixes what it can and tells him in simple word
 
 ---
 
-## 🆕 What's new
+## What's new
 
 | Version | Highlights |
 |:---:|---|
-| **1.8** | 📰 **Weekly flyer for Facebook**: pick up to 10 photos and the store reads every name and price by itself · 🧼 clean product images even when the photo has a price tag or is a screenshot · 🍇 the right variety in the pictures (green grapes stay green) · 🔔 **quiet by design**: push alerts only when something really needs a human, via my **own notification server** with a public fallback · 🏷️ printer reconnects at most 3 times a day so the music never stutters · 🔬 an **all-day screen profiler** to hunt down "it lags sometimes" |
-| **1.7** | 📰 New **Weekly flyer** tab · 🤖 AI swaps bad photos for better images · 📤 share to Facebook with ready-made text · ⌨️ quick typing: `räkor 85,98 ord 112,98` ("prawns 85.98, regular price 112.98") · 🔍 bigger ad preview · 🚀 faster start and connect |
-| **1.6** | 🖥️ Photos cut out and **videos rendered on my home server** (16 s instead of 1–2 min, the Pi takes over if it's down) · 🤖 AI check of the video **5× faster** · 📺 TV turns itself on in the morning and back on if it switches off · 🏷️ label printer stays connected without music dropouts · 🔍 full-screen ad preview |
-| **1.5** | ⚡ Ads about **twice as fast** · ⏩ every song starts where the singing starts · ✂️ shorter songs · ✍️ typo fixing |
-| **1.4** | 🎨 Calmer design · 🧭 tabs back at the bottom · 🆘 **Report a problem** · 🔒 developer-only system info |
-| **1.3** | 💿 Music-first home screen with album covers · 🖼️ **pick the product photo yourself** · 📲 in-app updates · 🚀 instant start |
-| **1.2** | ⏱️ Ad length per ad · ⏩ song start position · ❤️ favourites · 🩺 store computer status · 💾 nightly backup |
+| **1.8** | **Weekly flyer for Facebook**: pick up to 10 photos and the store reads every name and price by itself · clean product images even when the photo has a price tag or is a screenshot · the right variety in the pictures (green grapes stay green) · **quiet by design**: push alerts only when something really needs a human, via my **own notification server** with a public fallback · printer reconnects at most 3 times a day so the music never stutters · an **all-day screen profiler** to hunt down "it lags sometimes" |
+| **1.7** | New **Weekly flyer** tab · AI swaps bad photos for better images · share to Facebook with ready-made text · quick typing: `räkor 85,98 ord 112,98` ("prawns 85.98, regular price 112.98") · bigger ad preview · faster start and connect |
+| **1.6** | Photos cut out and **videos rendered on my home server** (16 s instead of 1–2 min, the Pi takes over if it's down) · AI check of the video **5× faster** · TV turns itself on in the morning and back on if it switches off · label printer stays connected without music dropouts · full-screen ad preview |
+| **1.5** | Ads about **twice as fast** · every song starts where the singing starts · shorter songs · typo fixing |
+| **1.4** | Calmer design · tabs back at the bottom · **Report a problem** · developer-only system info |
+| **1.3** | Music-first home screen with album covers · **pick the product photo yourself** · in-app updates · instant start |
+| **1.2** | Ad length per ad · song start position · favourites · store computer status · nightly backup |
 
 <details>
-<summary><b>📜 Earlier versions</b></summary>
+<summary><b> Earlier versions</b></summary>
 
 - **1.1** · automatic reconnect, clearer error messages, smoother video previews, many small fixes from real use
 - **1.0** · AI ads, weather scheduling, store music, price labels, Swedish and Arabic
@@ -184,7 +183,7 @@ and a server that watches itself, fixes what it can and tells him in simple word
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
 <div align="center">
 
@@ -202,20 +201,20 @@ and a server that watches itself, fixes what it can and tells him in simple word
 
 ---
 
-## 🎬 How an ad is made
+## How an ad is made
 
 ```mermaid
 flowchart LR
-    A["📱 Phone app<br/>photo + price"] --> B["🧠 AI<br/>recognise & parse"]
+    A[" Phone app<br/>photo + price"] --> B[" AI<br/>recognise & parse"]
     B --> C{"Photo?"}
-    C -- no --> D["🌐 Find image online"]
-    C -- yes --> E["✂️ Cut out product"]
+    C -- no --> D[" Find image online"]
+    C -- yes --> E[" Cut out product"]
     D --> E
-    E --> F["🎬 Render video"]
-    F --> G["🔍 AI quality review"]
+    E --> F[" Render video"]
+    F --> G[" AI quality review"]
     G -- problems --> F
-    G -- approved --> H["📺 Store screen"]
-    W["🌦️ Weather forecast"] --> H
+    G -- approved --> H[" Store screen"]
+    W[" Weather forecast"] --> H
 ```
 
 <details>
@@ -238,14 +237,14 @@ flowchart LR
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```mermaid
 flowchart TB
-    subgraph Phone["📱 Phone"]
+    subgraph Phone[" Phone"]
         APP["Store app<br/>Kotlin · Compose"]
     end
-    subgraph Pi["🍓 Raspberry Pi 4"]
+    subgraph Pi[" Raspberry Pi 4"]
         API["App server<br/>FastAPI"]
         BOT["Ad engine<br/>AI · rendering"]
         MUS["Music player"]
@@ -256,15 +255,15 @@ flowchart TB
     API --> BOT --> SIGN
     API --> MUS
     HEALTH -.watches.-> SIGN & MUS & BOT
-    subgraph Home["🏠 Home server"]
+    subgraph Home[" Home server"]
         GPU["Cut-out + rendering<br/>6 cores"]
         NTFY["Push server"]
     end
     BOT -.Tailscale.-> GPU
-    HEALTH -.alerts.-> NTFY --> ME["📲 My phone"]
-    SIGN --> TV["📺 Store TV"]
-    MUS --> SPK["🔊 Bluetooth speaker"]
-    API --> PRN["🏷️ Label printer"]
+    HEALTH -.alerts.-> NTFY --> ME[" My phone"]
+    SIGN --> TV[" Store TV"]
+    MUS --> SPK[" Bluetooth speaker"]
+    API --> PRN[" Label printer"]
 ```
 
 | Layer | Tech |
@@ -280,7 +279,7 @@ flowchart TB
 
 ---
 
-## 🛡️ Built to run without me
+## Built to run without me
 
 A system in a real store has no one watching it. So it watches itself:
 
@@ -301,7 +300,7 @@ A system in a real store has no one watching it. So it watches itself:
 
 ---
 
-## ⚡ Performance
+## Performance
 
 Everything runs on **one Raspberry Pi 4**: the screen, the music, the app server and the video rendering.
 
@@ -313,24 +312,24 @@ Everything runs on **one Raspberry Pi 4**: the screen, the music, the app server
 | Music interruptions | **0** |
 | Max CPU temperature | **71 °C** (no throttling) |
 | Publish a finished ad | **≈ 2 s** |
-| Video encoding per ad | **44 s → 22 s** |
+| Video encoding per ad | **44 s 22 s** |
 | Nightly backup size | **≈ 8 MB** |
 
 </div>
 
 ---
 
-## 🧩 Problems I solved along the way
+## Problems I solved along the way
 
 <details open>
-<summary><b>📺 The stuttering screen</b></summary>
+<summary><b> The stuttering screen</b></summary>
 
 The TV dropped ~20 frames per second during transitions. Profiling showed the Pi was rotating every frame
 in software. Rendering videos **pre-rotated** and in a hardware-friendly format took it to **zero dropped frames**.
 </details>
 
 <details>
-<summary><b>🖼️ Bad product images</b></summary>
+<summary><b> Bad product images</b></summary>
 
 Image search loves cartoons, watermarks and sad-looking bananas. I built a multi-step search with fallbacks,
 a scoring step, a **freshness check** for fruit and vegetables, and a nightly job that prepares images for
@@ -338,28 +337,28 @@ common products in advance.
 </details>
 
 <details>
-<summary><b>🎨 Every ad looked the same</b></summary>
+<summary><b> Every ad looked the same</b></summary>
 
 Customers stop noticing an ad that looks like the last one. A variation system now picks colours, badge,
 layout and motion so that **no ad repeats the previous one's style**.
 </details>
 
 <details>
-<summary><b>🔊 "The volume changes by itself"</b></summary>
+<summary><b> "The volume changes by itself"</b></summary>
 
 Tracked it down to the Bluetooth stack restoring an old level after every reconnect, fighting two other
 volume controls. Replaced all three with **one**.
 </details>
 
 <details>
-<summary><b>⏳ Slow requests on a phone</b></summary>
+<summary><b> Slow requests on a phone</b></summary>
 
 Making a video takes a minute; a phone connection doesn't wait that long. Everything slow now runs in the
 background with **live progress updates**, and the app picks up where it left off if the connection drops.
 </details>
 
 <details>
-<summary><b>🐢 "Making an ad takes forever"</b></summary>
+<summary><b> "Making an ad takes forever"</b></summary>
 
 Measured every step on the Pi. The app used to cut out four photos before dad could even choose one, and the
 preview was encoded with a slow preset that the screen re-encodes anyway. Now only the chosen photo is cut out,
@@ -367,7 +366,7 @@ the preview uses a fast preset, and the AI review redoes a video at most once. R
 </details>
 
 <details>
-<summary><b>🎻 Songs with a three-minute intro</b></summary>
+<summary><b> Songs with a three-minute intro</b></summary>
 
 Old concert recordings often start with tuning and applause. At night, when the store is closed, the AI listens
 to the start of every song and notes when the singing begins. The player jumps there automatically (and dad can
@@ -375,7 +374,7 @@ still adjust it in 10-second steps). The original files are never touched.
 </details>
 
 <details>
-<summary><b>🔔 Alert fatigue</b></summary>
+<summary><b> Alert fatigue</b></summary>
 
 The first health check told me *everything*: "all OK" four times a day, "printer is off", "TV didn't answer",
 and "OK again" when a problem went away. I started ignoring it, which is the worst thing an alarm can cause.
@@ -384,7 +383,7 @@ matter at that time of day.
 </details>
 
 <details>
-<summary><b>🏷️ The printer that paused the music</b></summary>
+<summary><b> The printer that paused the music</b></summary>
 
 The label printer and the speaker share the Pi's Bluetooth radio. Every failed connection attempt to a printer
 that was switched off locked the radio for ~40 seconds, and the music stopped. The fix: keep **one** open
@@ -393,7 +392,7 @@ Printing still works instantly when someone presses Print.
 </details>
 
 <details>
-<summary><b>🔬 "The screen lags sometimes"</b></summary>
+<summary><b> "The screen lags sometimes"</b></summary>
 
 "Sometimes" is the hardest bug report there is. Instead of guessing, a profiler watches the screen player all
 day: dropped and late frames, frozen video, CPU per core, disk waits, rendering jobs and temperature, and saves
@@ -402,7 +401,7 @@ the heaviest processes at the exact moment a stutter happens. The end-of-day rep
 
 ---
 
-## 🎓 What I learned
+## What I learned
 
 - **Design for the real user.** My dad doesn't read error messages, so every message had to be something he can act on.
 - **Small hardware goes far** when you measure first and optimise what actually matters.
@@ -413,6 +412,6 @@ the heaviest processes at the exact moment a stutter happens. The end-of-day rep
 
 <div align="center">
 
-**Made by Mohammad Issa** 🌸 for my dad's store
+**Made by Mohammad Issa** for my dad's store
 
 </div>
