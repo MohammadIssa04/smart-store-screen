@@ -34,7 +34,7 @@ and **self-monitoring**, controlled from one simple phone app and running on a s
 [The story](#the-story) · [A day in the store](#a-day-in-the-store) · [Features](#features) ·
 [What's new](#whats-new) · [Screenshots](#screenshots) · [How an ad is made](#how-an-ad-is-made) ·
 [Architecture](#architecture) · [Reliability](#built-to-run-without-me) · [Performance](#performance) ·
-[Problems I solved](#problems-i-solved-along-the-way) · [What I learned](#what-i-learned)
+[Problems I solved](#problems-i-solved-along-the-way)
 
 ---
 
@@ -398,15 +398,6 @@ Printing still works instantly when someone presses Print.
 day: dropped and late frames, frozen video, CPU per core, disk waits, rendering jobs and temperature, and saves
 the heaviest processes at the exact moment a stutter happens. The end-of-day report points at the cause.
 </details>
-
----
-
-## What I learned
-
-- **Design for the real user.** My dad doesn't read error messages, so every message had to be something he can act on.
-- **Small hardware goes far** when you measure first and optimise what actually matters.
-- **AI is a tool, not the product.** It's wrapped in checks, fallbacks and a second AI review, because "usually right" isn't good enough on a store screen.
-- **Reliability is a feature.** Backups, health checks and "never delete" turned out to matter as much as any button.
 
 ---
 
